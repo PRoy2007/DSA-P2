@@ -1,0 +1,2 @@
+osmnx[neighbors]==2.1.1
+folium==0.20.0
