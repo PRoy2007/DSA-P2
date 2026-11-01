@@ -1,8 +1,10 @@
 from pathlib import Path
 from osmnx.distance import great_circle, nearest_nodes
 from osmnx.graph import graph_from_place
-from osmnx.io import save_graphml
+from osmnx.io import load_graphml, save_graphml
 from osmnx.routing import add_edge_speeds, add_edge_travel_times
+# using the graph from here: https://osmnx.readthedocs.io/en/stable/user-reference.html#module-osmnx.graph
+# _create_graph method is defined here: https://github.com/gboeing/osmnx/blob/v2.1.1/osmnx/graph.py
 
 
 
@@ -97,6 +99,19 @@ def road_coordinates(graph, start_id, end_id, road_id):
 
 
 
+def load_graph():
+    # makes it easy to load the locally stored graph
+    cab_files = sorted(Path("cabspottingdata").glob("*.txt"))
+    observations = cab_files[0].read_text().splitlines()
+    middle_observation = observations[len(observations) // 2].split()
+    timestamp = int(middle_observation[3])
+    graph = load_graphml("roads.graphml")
+    cabs = load_cabs("cabspottingdata", timestamp)
+    attach_cabs(graph, cabs)
+    return graph
+
+
+
 def download_roads(filename="roads.graphml"):
     # downloads the maps data for local SF area
     # just needs to be done once
@@ -112,3 +127,7 @@ if __name__ == '__main__':
     # should be uploaded via git, but if not, it can be downloaded again
     
     
+
+
+
+
