@@ -21,18 +21,26 @@ def best_cab(paths):
     return min(paths, key=lambda cab_id: paths[cab_id][1])
 
 # Helper to get points to draw from the path data
-def route_points(graph, path):
-    points = []
-    for u, v in path:
-        roads = graph.get_edge_data(u, v)
-        if roads is None:
-            continue
-        key = min(roads, key=lambda k: roads[k]["travel_time"])
-        points.extend(road_coordinates(graph, u, v, key))
-    return points
+def path_nodes(path, end_node):
+    # Take the first node of each pair in each pair and the end node
+    return [u for u, _ in path] + [end_node]
+
+def edge_points(graph, u, v):
+    roads = graph.get_edge_data(u, v)
+    if roads is None: return []
+    key = min(roads, key=lambda k: roads[k]["travel_time"])
+    return road_coordinates(graph, u, v, key)
+
+# Helper to determine what routes are A* or Dijkstra only and which are both for color coding
+def route_segments(graph, a_nodes, d_nodes):
+    # Split into sets and determine which are both and which are unique
+    a_edges = set(zip(a_nodes, a_nodes[1:]))
+    d_edges = set(zip(d_nodes, d_nodes[1:]))
+    groups = [(a_edges & d_edges, "purple", "Both"), (a_edges - d_edges, "red", "A* only"), (d_edges - a_edges, "blue", "Dijkstra only")]
+    return [(edge_points(graph, u, v), color, label) for edges, color, label in groups for u, v in edges]
 
 # Build folium map
-def build_map(graph, pickup_id=None, radius=None, cabs=None, route=None, best_id=None, view=None):
+def build_map(graph, pickup_id=None, radius=None, cabs=None, segments=None, origin_ids=()):
     # Declare map bounds
     b = SERVICE_BOUNDS
     corners = [[b["south"], b["west"]], [b["north"], b["east"]]]
@@ -49,19 +57,22 @@ def build_map(graph, pickup_id=None, radius=None, cabs=None, route=None, best_id
     folium.Rectangle(bounds=corners, color="black", weight=2, dash_array="8 8", fill=False, tooltip="Service area",).add_to(m)
 
     if pickup_id is not None:
-        # Draw pickup location
-        node = graph.nodes[pickup_id]
+        # Draw search radius circle
         center = (node["y"], node["x"])
-        folium.Marker(center, tooltip="Pickup", icon=folium.Icon(color="red")).add_to(m)
-        folium.Circle(center, radius=radius * MILE, color="red", fill=False).add_to(m)
+        folium.Circle(center, radius=radius * MILE, color="black", weight=1, fill=False).add_to(m)
 
-        # Mark best cab as blue, others marked as green
+        # Mark best cab as green, others marked as gray
         for cab_id, cab in (cabs or {}).items():
-            color = "blue" if cab_id == best_id else "green"
-            folium.Marker((cab.latitude, cab.longitude), tooltip=cab_id, icon=folium.Icon(color=color)).add_to(m)
+            if cab_id in origin_ids: color = "green"
+            else: color = "gray"
+            folium.Marker((cab.latitude, cab.longitude), tooltip=f"Cab {cab_id}", icon=folium.Icon(color=color)).add_to(m)
 
-        if route:
-            folium.PolyLine(route, color="blue", weight=5).add_to(m)
+        # Draw route segments
+        for points, color, label in (segments or []):
+            folium.PolyLine(points, color=color, weight=5, opacity=0.85, tooltip=label).add_to(m)
+
+        # Draw pickup location
+        folium.Marker(center, tooltip="Pickup", icon=folium.Icon(color="red")).add_to(m)
     return m
 
 # Helper to check if a location is within the map bounds
