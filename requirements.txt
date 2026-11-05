@@ -1,2 +1,4 @@
 osmnx[neighbors]==2.1.1
 folium==0.20.0
+streamlit==1.66.1
+streamlit-folium==0.27.4
