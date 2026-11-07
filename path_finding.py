@@ -35,17 +35,17 @@ def dijkstra(graph, pickup_id, radius_miles):
         visited.add(current_ID)
         nodes_checked.append(current_ID)
 
-        for start_id, neighbor_id, road_id, road in graph.out_edges(current_ID, keys=True, data=True):
+        for start_id, neighbor_id, road_id, road in graph.in_edges(current_ID, keys=True, data=True):
 
             travel_seconds = road["travel_time"]
             new_time = current_time + travel_seconds
 
-            if new_time < travel_times[neighbor_id]:
-                travel_times[neighbor_id] = new_time
+            if new_time < travel_times[start_id]:
+                travel_times[start_id] = new_time
 
                 # Remember how we reached this node
-                previous[neighbor_id] = (neighbor_id, start_id, road_id)
-                heappush(priorityQ, (new_time, neighbor_id))
+                previous[start_id] = (start_id, neighbor_id, road_id)
+                heappush(priorityQ, (new_time, start_id))
 
 
     #reconstruct paths to nearby cabs
@@ -124,10 +124,11 @@ def a_star(graph, pickup_id, radius_miles):
     for cab_id, cab in nearby_cabs.items():
         travel_times = {node: float('inf') for node in graph.nodes}
 
-        destination = cab.node_id
+        start_node = cab.node_id
+        destination = pickup_id
 
-        priorityQ = [(0, pickup_id)]
-        travel_times[pickup_id] = 0
+        priorityQ = [(heuristic(graph, start_node, destination), start_node)]
+        travel_times[start_node] = 0
 
         previous = {}
         visited = set()
@@ -169,62 +170,63 @@ def a_star(graph, pickup_id, radius_miles):
         road_path = []
         current_node = destination
 
-        while current_node != pickup_id:
-            previous_node, next_node = previous[current_node]
-            road_path.append((previous_node, next_node))
-            current_node = next_node
+        while current_node != start_node:
+            current_node, previous_node = previous[current_node]
+            road_path.append((previous_node, current_node))
+            current_node = previous_node
 
         #cab ID, road path, and travel time
+        road_path.reverse()
         paths[cab_id] = (road_path, travel_times[destination])
 
     stats = {"nodes_checked": nodes_checked, "nodes_checked_count": nodes_checked_count, "total_nodes_checked": sum(nodes_checked_count.values())}
 
     return paths, stats
 
-# def check_path(path):
-#     for i in range(len(path) - 1):
-#         current_end = path[i][1]
-#         next_start = path[i + 1][0]
+def check_path(path):
+    for i in range(len(path) - 1):
+        current_end = path[i][1]
+        next_start = path[i + 1][0]
 
-#         if current_end != next_start:
-#             print(
-#                 f"Discontinuity at edge {i}: "
-#                 f"{path[i]} -> {path[i + 1]}"
-#             )
+        if current_end != next_start:
+            print(
+                f"Discontinuity at edge {i}: "
+                f"{path[i]} -> {path[i + 1]}"
+            )
 
-#     print("First edge:", path[0])
-#     print("Last edge:", path[-1])
+    print("First edge:", path[0])
+    print("Last edge:", path[-1])
 
-# from time import perf_counter
-# from random import choice
-# def test_run():
-#     graph = load_graph()
-#     # picks a random pickup location from the graph
-#     pickup_id = choice(list(graph.nodes))
-#     radius_miles = 0.5 # self explanatory
+from time import perf_counter
+from random import choice
+def test_run():
+    graph = load_graph()
+    # picks a random pickup location from the graph
+    pickup_id = choice(list(graph.nodes))
+    radius_miles = 1 # self explanatory
 
-#     start = perf_counter()
-#     distances_a, a_stats = a_star(graph, pickup_id, radius_miles)
-#     end = perf_counter()
-#     print("A* execution time:", end - start)
+    start = perf_counter()
+    distances_a, a_stats = a_star(graph, pickup_id, radius_miles)
+    end = perf_counter()
+    print("A* execution time:", end - start)
 
-#     for cab_id in distances_a:
-#         print(f"Cab {cab_id}:")
-#         check_path(distances_a[cab_id][0])
+    for cab_id in distances_a:
+        print(f"Cab {cab_id}:")
+        check_path(distances_a[cab_id][0])
+    print("*"*20)
+    start = perf_counter()
+    distances_dijkstra, dijkstra_stats = dijkstra(graph, pickup_id, radius_miles)
+    end = perf_counter()
+    print("Dijkstra execution time:", end - start)
     
-#     start = perf_counter()
-#     distances_dijkstra, dijkstra_stats = dijkstra(graph, pickup_id, radius_miles)
-#     end = perf_counter()
-#     print("Dijkstra execution time:", end - start)
-    
-#     for cab_id in distances_dijkstra:
-#         print(f"Cab {cab_id}:")
-#         check_path(distances_dijkstra[cab_id][0])
+    for cab_id in distances_dijkstra:
+        print(f"Cab {cab_id}:")
+        check_path(distances_dijkstra[cab_id][0])
 
-#     # for cab_id in distances_dijkstra:
-#     #     if cab_id not in distances_a:
-#     #         print(f"Cab {cab_id}: Missing from A*")
-#     #         continue
+    # for cab_id in distances_dijkstra:
+    #     if cab_id not in distances_a:
+    #         print(f"Cab {cab_id}: Missing from A*")
+    #         continue
 
 #         # dijkstra_time = distances_dijkstra[cab_id][1]
 #         # astar_time = distances_a[cab_id][1]
@@ -237,4 +239,4 @@ def a_star(graph, pickup_id, radius_miles):
 #     print("----------------------")
 #     print(distances_a)
 
-# test_run()
+test_run()
