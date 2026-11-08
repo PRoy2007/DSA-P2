@@ -21,9 +21,9 @@ def best_cab(paths):
     return min(paths, key=lambda cab_id: paths[cab_id][1])
 
 # Helper to get points to draw from the path data
-def path_nodes(path, end_node):
+def path_nodes(path, start_node):
     # Take the first node of each pair in each pair and the end node
-    return [u for u, _ in path] + [end_node]
+    return [start_node] + [v for _, v in path]
 
 def edge_points(graph, u, v):
     roads = graph.get_edge_data(u, v)

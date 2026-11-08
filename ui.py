@@ -16,10 +16,10 @@ def get_graph():
 def run_search(_graph, pickup_id, radius = 3, algo = "A*"):
     start = perf_counter()
     if algo == "Dijkstra":
-        path = dijkstra(_graph, pickup_id, radius)
+        paths, stats = dijkstra(_graph, pickup_id, radius)
     else:
-        path = a_star(_graph, pickup_id, radius)
-    return path, perf_counter() - start
+        paths, stats = a_star(_graph, pickup_id, radius)
+    return paths, stats, perf_counter() - start
 
 #
 # Streamlit UI
@@ -62,11 +62,11 @@ else:
     # Filter out cabs that are not in the search radius
     if result and st.session_state.get("results_key") == (pickup_id, radius):
         summary = {}
-        for name, (paths, runtime) in result.items():
+        for name, (paths, stats, runtime) in result.items():
             best = best_cab(paths)
             if best is not None:
                 path, seconds = paths[best]
-                summary[name] = dict(best=best, seconds=seconds, runtime=runtime, nodes=path_nodes(path, cabs[best].node_id))
+                summary[name] = dict(best=best, seconds=seconds, runtime=runtime, checked=stats["total_nodes_checked"], nodes=path_nodes(path, cabs[best].node_id))
 
         # Check for results and display summary
         if len(summary) < 2:
@@ -77,11 +77,15 @@ else:
             segments = route_segments(graph, a["nodes"], d["nodes"])
 
             # Display stats for both algorithms
-            cols = st.columns(4)
-            cols[0].metric("A* compute (s)", f"{a['runtime']:.2f}")
-            cols[1].metric("Dijkstra compute (s)", f"{d['runtime']:.2f}")
-            cols[2].metric("A* route (min)", f"{a['seconds'] / 60:.1f}")
-            cols[3].metric("Dijkstra route (min)", f"{d['seconds'] / 60:.1f}")
+            r1 = st.columns(3)
+            r1[0].metric("A* compute (s)", f"{a['runtime']:.3f}")
+            r1[1].metric("A* nodes checked", f"{a['checked']:,}")
+            r1[2].metric("A* route (min)", f"{a['seconds'] / 60:.1f}")
+            r2 = st.columns(3)
+            r2[0].metric("Dijkstra compute (s)", f"{d['runtime']:.3f}")
+            r2[1].metric("Dijkstra nodes checked", f"{d['checked']:,}")
+            r2[2].metric("Dijkstra route (min)", f"{d['seconds'] / 60:.1f}")
+
             st.markdown(":green[■ Selected driver]   ·   :gray[■ Other drivers]   ·   :red[■ Pickup]   ·   :violet[■ Both routes]   ·   :red[■ A* only]   ·   :blue[■ Dijkstra only]")
 
 # Create map with output and preserve last clicked location
