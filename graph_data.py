@@ -1,6 +1,6 @@
 from pathlib import Path
 from osmnx.distance import great_circle, nearest_nodes
-from osmnx.graph import graph_from_place
+from osmnx.graph import graph_from_bbox
 from osmnx.io import load_graphml, save_graphml
 from osmnx.routing import add_edge_speeds, add_edge_travel_times
 # using the graph from here: https://osmnx.readthedocs.io/en/stable/user-reference.html#module-osmnx.graph
@@ -115,9 +115,14 @@ def load_graph():
 def download_roads(filename="roads.graphml"):
     # downloads the maps data for local SF area
     # just needs to be done once
-    graph = graph_from_place("San Francisco, California, USA", network_type="drive")
+    graph = graph_from_bbox(
+        (-122.943611, 37.378775, -121.918125, 38.161515),
+        network_type="drive",
+    ) # expand area to get at least 100k data points
     graph = add_edge_speeds(graph, fallback=30)
     graph = add_edge_travel_times(graph)
+    print(f"{graph.number_of_nodes():,} nodes")
+    assert graph.number_of_nodes() >= 100_000, "Expand the bounds further"
     save_graphml(graph, filename)
     return graph
 
