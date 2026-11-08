@@ -8,10 +8,10 @@ MILE = 1609.344
 
 # Map bounds (precomputed)
 SERVICE_BOUNDS = {
-    "north": 37.8320262,
-    "east": -122.3497964,
-    "south": 37.708264,
-    "west": -122.51194,
+    "north": 38.161515,
+    "east": -121.918125,
+    "south": 37.378775,
+    "west": -122.943611,
 }
 
 # Helper to find which cab the algorithm's path points to
