@@ -22,7 +22,7 @@ def best_cab(paths):
 
 # Helper to get points to draw from the path data
 def path_nodes(path, start_node):
-    # Take the first node of each pair in each pair and the end node
+    # Start at the driver and trace the path
     return [start_node] + [v for _, v in path]
 
 def edge_points(graph, u, v):

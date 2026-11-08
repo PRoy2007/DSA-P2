@@ -31,6 +31,9 @@ graph = get_graph()
 pickup_id = st.session_state.get("pickup_id")
 st.title("Drivers2You")
 
+# Show data counts
+st.sidebar.caption(f"Graph: {len(graph.nodes):,} nodes, {len(graph.edges):,} edges, {len(graph.graph['cabs'])} cabs")
+
 #Sidebar (Search options, run search, new pickup)
 radius = st.sidebar.slider("Search radius (miles)", 0.5, 5.0, 2.0, 0.5)
 
@@ -59,6 +62,10 @@ else:
     # Build summary
     result = st.session_state.get("result")
 
+    # Remind user to refresh after changing settings if desired
+    if result and st.session_state.get("results_key") != (pickup_id, radius):
+        st.info("Settings changed. Press Find ride to search again.")
+
     # Filter out cabs that are not in the search radius
     if result and st.session_state.get("results_key") == (pickup_id, radius):
         summary = {}
@@ -66,7 +73,7 @@ else:
             best = best_cab(paths)
             if best is not None:
                 path, seconds = paths[best]
-                summary[name] = dict(best=best, seconds=seconds, runtime=runtime, checked=stats["total_nodes_checked"], nodes=path_nodes(path, cabs[best].node_id))
+                summary[name] = dict(best=best, seconds=seconds, runtime=runtime, checked=stats["total_nodes_checked"], searches=len(stats["nodes_checked_count"]), nodes=path_nodes(path, cabs[best].node_id))
 
         # Check for results and display summary
         if len(summary) < 2:
@@ -85,6 +92,8 @@ else:
             r2[0].metric("Dijkstra compute (s)", f"{d['runtime']:.3f}")
             r2[1].metric("Dijkstra nodes checked", f"{d['checked']:,}")
             r2[2].metric("Dijkstra route (min)", f"{d['seconds'] / 60:.1f}")
+
+            st.caption(f"A*: {a['searches']} searches (about {a['checked'] // max(a['searches'], 1):,} nodes each) - Dijkstra: 1 search for all cabs")
 
             st.markdown(":green[■ Selected driver]   ·   :gray[■ Other drivers]   ·   :red[■ Pickup]   ·   :violet[■ Both routes]   ·   :red[■ A* only]   ·   :blue[■ Dijkstra only]")
 
