@@ -35,7 +35,7 @@ st.title("Drivers2You")
 st.sidebar.caption(f"Graph: {len(graph.nodes):,} nodes, {len(graph.edges):,} edges, {len(graph.graph['cabs'])} cabs")
 
 #Sidebar (Search options, run search, new pickup)
-radius = st.sidebar.slider("Search radius (miles)", 0.5, 5.0, 2.0, 0.5)
+radius = st.sidebar.slider("Search radius (miles)", 0.5, 35.0, 35.0, 0.5)
 
 # Run both algorithms
 if st.sidebar.button("Find ride", disabled=pickup_id is None):
