@@ -106,7 +106,7 @@ def heuristic(graph, node_id, end_node_id):
     distance_meters = 2 * 6371000 * asin(sqrt(a))
     distance_miles = distance_meters / 1609.344
 
-    max_speed_mph = 80
+    max_speed_mph = 66
 
     return 3600 * (distance_miles / max_speed_mph)  
 
@@ -251,4 +251,5 @@ def test_run():
 #     print("----------------------")
 #     print(distantrces_a)
 
-test_run()
+if __name__ == '__main__':
+    test_run()

@@ -12,7 +12,7 @@ def get_graph():
     return load_graph()
 
 # Performs the search operations and returns the path found and runtime
-@st.cache_resource
+@st.cache_resource(max_entries=10)
 def run_search(_graph, pickup_id, radius = 3, algo = "A*"):
     start = perf_counter()
     if algo == "Dijkstra":
@@ -35,7 +35,7 @@ st.title("Drivers2You")
 st.sidebar.caption(f"Graph: {len(graph.nodes):,} nodes, {len(graph.edges):,} edges, {len(graph.graph['cabs'])} cabs")
 
 #Sidebar (Search options, run search, new pickup)
-radius = st.sidebar.slider("Search radius (miles)", 0.5, 35.0, 35.0, 0.5)
+radius = st.sidebar.slider("Search radius (miles)", 0.5, 35.0, 2.0, 0.5)
 
 # Run both algorithms
 if st.sidebar.button("Find ride", disabled=pickup_id is None):
@@ -95,7 +95,7 @@ else:
 
             st.caption(f"A*: {a['searches']} searches (about {a['checked'] // max(a['searches'], 1):,} nodes each) - Dijkstra: 1 search for all cabs")
 
-            st.markdown(":green[■ Selected driver]   ·   :gray[■ Other drivers]   ·   :red[■ Pickup]   ·   :violet[■ Both routes]   ·   :red[■ A* only]   ·   :blue[■ Dijkstra only]")
+            st.markdown(":green[■ Selected driver]   -   :gray[■ Other drivers]   -   :red[■ Pickup]   -   :violet[■ Both routes]   -   :red[■ A* only]   -   :blue[■ Dijkstra only]")
 
 # Create map with output and preserve last clicked location
 out = st_folium(build_map(graph, pickup_id, radius, cabs, segments, origin_ids), height = 600, returned_objects=["last_clicked"], key="map")
