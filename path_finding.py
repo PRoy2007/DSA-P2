@@ -25,6 +25,7 @@ def dijkstra(graph, pickup_id, radius_miles):
     heapify(priorityQ)
 
     visited = set()
+    remaining_cabs = set(cab_nodes)
     nodes_checked = []
 
     while priorityQ:
@@ -33,11 +34,12 @@ def dijkstra(graph, pickup_id, radius_miles):
 
         if current_ID in visited:
             continue
+        if not remaining_cabs:
+            break
         visited.add(current_ID)
         nodes_checked.append(current_ID)
+        remaining_cabs.discard(current_ID)
 
-        if cab_nodes.issubset(visited):
-            break
 
         for start_id, neighbor_id, road_id, road in graph.in_edges(current_ID, keys=True, data=True):
 
