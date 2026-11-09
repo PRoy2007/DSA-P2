@@ -14,12 +14,11 @@ def get_graph():
 # Performs the search operations and returns the path found and runtime
 @st.cache_resource(max_entries=10)
 def run_search(_graph, pickup_id, radius = 3, algo = "A*"):
-    start = perf_counter()
     if algo == "Dijkstra":
         paths, stats = dijkstra(_graph, pickup_id, radius)
     else:
         paths, stats = a_star(_graph, pickup_id, radius)
-    return paths, stats, perf_counter() - start
+    return paths, stats
 
 #
 # Streamlit UI
@@ -69,11 +68,11 @@ else:
     # Filter out cabs that are not in the search radius
     if result and st.session_state.get("results_key") == (pickup_id, radius):
         summary = {}
-        for name, (paths, stats, runtime) in result.items():
+        for name, (paths, stats) in result.items():
             best = best_cab(paths)
             if best is not None:
                 path, seconds = paths[best]
-                summary[name] = dict(best=best, seconds=seconds, runtime=runtime, checked=stats["total_nodes_checked"], searches=len(stats["nodes_checked_count"]), nodes=path_nodes(path, cabs[best].node_id))
+                summary[name] = dict(best=best, seconds=seconds, runtime=stats["execution_time"], checked=stats["total_nodes_checked"], searches=len(stats["nodes_checked_count"]), nodes=path_nodes(path, cabs[best].node_id))
 
         # Check for results and display summary
         if len(summary) < 2:
